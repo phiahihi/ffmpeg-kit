@@ -153,6 +153,41 @@ public class FFmpegKitFlutterPlugin implements FlutterPlugin, ActivityAware, Met
         Log.d(LIBRARY_NAME, String.format("FFmpegKitFlutterPlugin created %s.", this));
     }
 
+    protected void registerGlobalCallbacks() {
+        FFmpegKitConfig.enableFFmpegSessionCompleteCallback(this::emitSession);
+        FFmpegKitConfig.enableFFprobeSessionCompleteCallback(this::emitSession);
+        FFmpegKitConfig.enableMediaInformationSessionCompleteCallback(this::emitSession);
+
+        FFmpegKitConfig.enableLogCallback(log -> {
+            if (logsEnabled.get()) {
+                emitLog(log);
+            }
+        });
+
+        FFmpegKitConfig.enableStatisticsCallback(statistics -> {
+            if (statisticsEnabled.get()) {
+                emitStatistics(statistics);
+            }
+        });
+    }
+
+    @Override
+    public void onAttachedToEngine(@NonNull final FlutterPluginBinding flutterPluginBinding) {
+        this.flutterPluginBinding = flutterPluginBinding;
+    }
+
+    @Override
+    public void onDetachedFromEngine(@NonNull final FlutterPluginBinding binding) {
+        this.flutterPluginBinding = null;
+        uninit();
+    }
+
+    @Override
+    public void onAttachedToActivity(@NonNull ActivityPluginBinding activityPluginBinding) {
+        Log.d(LIBRARY_NAME, String.format("FFmpegKitFlutterPlugin %s attached to activity %s.", this, activityPluginBinding.getActivity()));
+        init(flutterPluginBinding.getBinaryMessenger(), flutterPluginBinding.getApplicationContext(), activityPluginBinding.getActivity(), activityPluginBinding);
+    }
+
     @SuppressWarnings("deprecation")
     protected void init(final BinaryMessenger messenger, final Context context, final Activity activity, final ActivityPluginBinding activityBinding) {
         registerGlobalCallbacks();
